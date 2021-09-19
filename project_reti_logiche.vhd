@@ -27,7 +27,6 @@ signal n_row_reg_load : std_logic;
 signal n_row_sel : std_logic;
 signal zero_row_sel : std_logic;
 signal stop_adding_sel : std_logic;
-signal first_two_pixels_sel : std_logic;
 signal result_reg_load : std_logic;
 signal reset_result_sel : std_logic;
 signal o_addr_load : std_logic;
@@ -56,9 +55,15 @@ signal max_reg_load : std_logic;
 signal end_sum_sel : std_logic;
 signal sum_counter_load : std_logic;
 signal stop_sel : std_logic;
+signal concat_reg_load : std_logic;
+signal end_shift : std_logic;
+signal gen_comp_one : std_logic;
+signal gen_comp_two : std_logic;
+signal gen_comp_three : std_logic;
+signal gen_comp_four : std_logic;
 --signal computed_min_and_shift : std_logic;
 signal second_time : std_logic;
-type S is (S0,S1,S2,S3,S4_1,S4_2,S5,S6,S7,S8,S9,S10,S11,S12,S16,S17,S18); --(,S13,S14,S15,)
+type S is (S0,S1,S2,S3,S4_1,S4_2,S5,S6,S7,S8,S9,S10,S11,S12,S16,S17,S18,S3_1); --(,S13,S14,S15,)
 signal cur_state, next_state : S;
 
 signal o_n_row_reg : std_logic_vector(7 downto 0); --output/mux primo foglio
@@ -68,29 +73,32 @@ signal o_n_tot_addr_reg : std_logic_vector(15 downto 0);
 signal o_addr_to_look_reg : std_logic_vector(15 downto 0);
 signal o_curr_addr_reg : std_logic_vector(15 downto 0);
 signal o_o_addr_reg : std_logic_vector(15 downto 0);
-signal first_two_pixels_demux : std_logic_vector(7 downto 0);
 signal n_row_mux : std_logic_vector(7 downto 0);
 signal reset_result_mux : std_logic_vector(15 downto 0);
-signal stop_adding_mux : std_logic_vector(7 downto 0);
+signal stop_adding_mux : std_logic_vector(15 downto 0);
 signal tot_addr_mux : std_logic_vector(15 downto 0);
 signal zero_row_mux : std_logic_vector(15 downto 0);
 signal decr_mux : std_logic_vector(15 downto 0);
 signal second_or_def_mux : std_logic_vector(15 downto 0);
 signal stop_mux : std_logic_vector(15 downto 0);
 signal first_sel_mux : std_logic_vector(15 downto 0);
+signal current_address  : std_logic_vector(15 downto 0); --tentativo con curr e o_addr
 
 signal o_min_reg : std_logic_vector(7 downto 0); --output/mux secondo foglio
 signal o_max_reg : std_logic_vector(7 downto 0);
-signal o_curr_pixel_reg : std_logic_vector(7 downto 0);
+signal o_curr_pixel_reg : std_logic_vector(15 downto 0);
 signal o_delta_reg : std_logic_vector(15 downto 0);
 signal o_num_reg : std_logic_vector(15 downto 0);
 signal o_exp_reg : std_logic_vector(15 downto 0);
 signal o_sum_counter_reg : std_logic_vector(7 downto 0);
+signal o_concat_reg : std_logic_vector(15 downto 0);
+signal o_shift_reg : std_logic_vector(7 downto 0);
 signal min_mux : std_logic_vector(7 downto 0);
 signal max_mux : std_logic_vector(7 downto 0);
 signal temp_mux : std_logic_vector(7 downto 0);
 signal two_power_of_zero_mux : std_logic_vector(15 downto 0);
 signal end_sum_mux : std_logic_vector(7 downto 0);
+signal conc_mux : std_logic_vector(15 downto 0);
 
 signal tot_addr_sum : std_logic_vector(15 downto 0); --somme/sottr. primo foglio
 signal result_sum : std_logic_vector(15 downto 0);
@@ -100,26 +108,34 @@ signal curr_addr_sum : std_logic_vector(15 downto 0);
 signal done_sum : std_logic_vector(15 downto 0);
 signal o_addr_sum : std_logic_vector(15 downto 0);
 
-signal curr_pixel_sub : std_logic_vector(7 downto 0); --somme/sottr. secondo foglio
-signal max_minus_min : std_logic_vector(7 downto 0);
+signal curr_pixel_sub : std_logic_vector(15 downto 0); --somme/sottr. secondo foglio
+signal max_minus_min : std_logic_vector(15 downto 0);
 signal delta_sum : std_logic_vector(15 downto 0);
 signal exp_sum : std_logic_vector(15 downto 0);
 signal counter_sum : std_logic_vector(7 downto 0);
+signal shift_sub : std_logic_vector(7 downto 0);
+signal shift_decr_sub : std_logic_vector(7 downto 0);
+--signal conc : std_logic_vector(15 downto 0);
 begin
   process(i_clk, i_rst)
   begin
       if(i_rst = '1') then
           cur_state <= S0;
+
+
+          --o_address <= current_address;
+          --o_result_reg <= "0000000000000000";
       elsif i_clk'event and i_clk = '1' then
           cur_state <= next_state;
       end if;
   end process;
 
-  process(cur_state, i_start, end_multiply, decrement, end_sum, done)
+  process(cur_state, i_start, end_multiply, decrement, end_sum, done, end_shift)
     begin
       next_state <= cur_state;
       case cur_state is
         when S0 =>
+            --o_result_reg <= "0000000000000000";
             if i_start = '1' then
               next_state <= S1;
             end if;
@@ -131,9 +147,17 @@ begin
         when S2 =>
             next_state <= S3;
         when S3 =>
-            if end_multiply = '1' then
+            if o_n_row_reg = "00000000" then
+            --if end_multiply = '1' then
               next_state <= S4_1;
+            else next_state <= S3;
             end if;
+            --next_state <= S3_1;
+        --when S3_1 =>
+            --if end_multiply = '1' then
+              --next_state <= S4_1;
+            --else next_state <= S3_1;
+            --end if;
         when S4_1 =>
             if decrement = '0' then
               next_state <= S6;
@@ -144,6 +168,7 @@ begin
         when S5 =>
             if decrement = '0' then
               next_state <= S6;
+            else next_state <= S5;
             end if;
         when S6 =>
             next_state <= S7;
@@ -156,7 +181,9 @@ begin
               next_state <= S10;
             end if;
         when S10 =>
+            if end_shift = '1' then
             next_state <= S11;
+            end if;
         when S11 =>
             next_state <= S12;
         when S12 =>
@@ -189,11 +216,11 @@ begin
 
     process(cur_state)
     begin
+        --o_result_reg <= "0000000000000000";
         o_address <= "0000000000000000";
         o_en <= '0';
         o_we <= '0';
         o_done <= '0';
-        first_two_pixels_sel <= '1';
         n_row_reg_load <= '0';
         result_reg_load <= '0';
         cost_reg_load <= '0';
@@ -220,7 +247,13 @@ begin
         sum_counter_load <= '0';
         curr_pixel_load <= '0';
         stop_sel <= '0';
-
+        shift_load <= '0';
+        end_shift <= '0';
+        gen_comp_one <= '0';
+        gen_comp_two <= '0';
+        gen_comp_three <= '0';
+        gen_comp_four <= '0';
+        o_data <= "00000000";
         case cur_state is
             when S0 =>
             when S1 =>
@@ -229,24 +262,32 @@ begin
                 cost_reg_load <= '1';
                 first_sel <= '0';
                 result_reg_load <= '1';
-
-                --o_cost_reg <= i_data; --i_data messo nei primi 3 reg/mux
-                --reset_result_mux <= i_data;
-                --tot_addr_mux <= i_data;
             when S2 =>
                 n_tot_addr_load <= '0';
                 cost_reg_load <= '0';
                 result_reg_load <= '0';
                 first_sel <= '1';
+                n_row_sel <= '0';
                 n_row_reg_load <= '1';
+                o_addr_load <= '1';
+                o_address <= "0000000000000001";
             when S3 =>
                 o_en <= '0';
                 n_row_sel <= '1';
                 n_tot_addr_load <= '1';
                 result_reg_load <= '1';
                 reset_result_sel <= '1';
+                n_row_reg_load <= '1';
                 tot_addr_sel <= '1';
-                first_two_pixels_sel <= '0';
+                o_address <= "0000000000000010";
+            when S3_1 =>
+                o_en <= '0';
+                n_row_sel <= '1';
+                n_tot_addr_load <= '1';
+                result_reg_load <= '1';
+                reset_result_sel <= '1';
+                tot_addr_sel <= '1';
+                o_address <= "0000000000000010";
             when S4_1 =>
                 o_en <= '1';
                 n_tot_addr_load <= '0';
@@ -275,6 +316,7 @@ begin
                 first_sel <= '0';
                 end_sum_sel <= '1';
                 stop_sel <= '1';
+                shift_load <= '1';
             when S11 =>
             when S12 =>
                 o_we <= '1';
@@ -286,7 +328,6 @@ begin
                 o_en <= '0';
                 o_we <= '0';
                 o_done <= '0';
-                first_two_pixels_sel <= '1';
                 n_row_reg_load <= '0';
                 result_reg_load <= '0';
                 cost_reg_load <= '0';
@@ -324,6 +365,7 @@ begin
 
     process(i_clk, i_rst)
     begin
+        o_cost_reg <= "00000000";
         if(i_rst = '1') then
             o_cost_reg <= "00000000";
         elsif i_clk'event and i_clk = '1' then
@@ -340,6 +382,7 @@ begin
 
     process(i_clk, i_rst)
     begin
+        o_n_tot_addr_reg <= "0000000000000000";
         if(i_rst = '1') then
             o_n_tot_addr_reg <= "0000000000000000";
         elsif i_clk'event and i_clk = '1' then
@@ -365,6 +408,7 @@ begin
 
     process(i_clk, i_rst)
     begin
+        o_result_reg <= "0000000000000000";
         if(i_rst = '1') then
             o_result_reg <= "0000000000000000";
         elsif i_clk'event and i_clk = '1' then
@@ -375,25 +419,24 @@ begin
     end process;
 
     with n_row_sel select
-        n_row_mux <= first_two_pixels_demux when '0',
+        n_row_mux <= i_data when '0',
                      n_row_sub when '1',
-                    "XXXXXXXX" when others;
-
-    with first_two_pixels_sel select --ricontrolla, forse inutile
-        first_two_pixels_demux <= i_data when '0',
-                     i_data when '1',
                     "XXXXXXXX" when others;
 
     process(i_clk, i_rst)
     begin
         if(i_rst = '1') then
-            o_n_row_reg <= "00000000";
+            o_n_row_reg <= "XXXXXXXX";
         elsif i_clk'event and i_clk = '1' then
             if(n_row_reg_load = '1') then
                 o_n_row_reg <= n_row_mux;
             end if;
         end if;
     end process;
+
+    n_row_sub <= o_n_row_reg - "00000001";
+
+    end_multiply <= '1' when (o_n_row_reg = "00000000") else '0'; --or (o_cost_reg = "00000000")) else '0';
 
     with decr_sel select
         decr_mux <= zero_row_mux when '0',
@@ -431,6 +474,11 @@ begin
 
     curr_addr_sum <= o_n_tot_addr_reg + "0000000000000001";
 
+    with second_or_default_sel select
+        second_or_def_mux <= "0000000000000001" when '0',
+                     o_curr_addr_reg when '1',
+                    "XXXXXXXXXXXXXXXX" when others;
+
     with first_sel select
         first_sel_mux <= second_or_def_mux when '0',
                      o_addr_sum when '1',
@@ -438,6 +486,7 @@ begin
 
     process(i_clk, i_rst)
     begin
+        o_o_addr_reg <= "0000000000000000";
         if(i_rst = '1') then
             o_o_addr_reg <= "0000000000000000";
         elsif i_clk'event and i_clk = '1' then
@@ -454,20 +503,170 @@ begin
 
     done_sum <= o_result_reg + o_n_tot_addr_reg;
 
+    --o_address <= o_o_addr_reg; --fonte indefinitezza
+
     o_addr_sum <= o_o_addr_reg + stop_mux;
 
-    n_row_sub <= o_n_row_reg - "00000001";
+    --o_addr_sum <= o_address + stop_mux;
+    --fine primo foglio
 
-    end_multiply <= '1' when ((o_n_row_reg = "00000000") or (o_cost_reg = "00000000")) else '0';
+    process(i_clk, i_rst)
+    begin
+        o_min_reg <= "11111111";
+        if(i_rst = '1') then
+            o_min_reg <= "11111111"; --255 valore iniziale min
+        elsif i_clk'event and i_clk = '1' then
+            if(min_reg_load = '1') then
+                o_min_reg <= min_mux;
+            end if;
+        end if;
+    end process;
+
+    --min_mux <= "11111111";
+    --max_mux <= "00000000";
+
+    with min_sel select
+        min_mux <= o_min_reg when gen_comp_one,
+                     i_data when not gen_comp_one,
+                    "11111111" when others;
+
+    gen_comp_one <= '1' when (i_data < o_min_reg) else '0';
+
+    process(i_clk, i_rst)
+    begin
+        if(i_rst = '1') then
+            o_max_reg <= "00000000"; --0 valore iniziale min
+        elsif i_clk'event and i_clk = '1' then
+            if(max_reg_load = '1') then
+                o_max_reg <= max_mux;
+            end if;
+        end if;
+    end process;
+
+    with max_sel select
+        max_mux <= o_max_reg when gen_comp_two,
+                     i_data when not gen_comp_two,
+                    "00000000" when others;
+
+    gen_comp_two <= '1' when (i_data > o_max_reg) else '0';
+
+    max_minus_min <= "00000000" & (o_max_reg - o_min_reg);
+
+    process(i_clk, i_rst)
+    begin
+        if(i_rst = '1') then
+            o_delta_reg <= "0000000000000000";
+        elsif i_clk'event and i_clk = '1' then
+            if(delta_load = '1') then
+                o_delta_reg <= max_minus_min;
+            end if;
+        end if;
+    end process;
+
+    delta_sum <= o_delta_reg + "0000000000000001";
+
+    process(i_clk, i_rst)
+    begin
+        if(i_rst = '1') then
+            o_num_reg <= "0000000000000000";
+        elsif i_clk'event and i_clk = '1' then
+            if(num_reg_load = '1') then
+                o_num_reg <= delta_sum;
+            end if;
+        end if;
+    end process;
+
+    with two_power_of_zero select
+        two_power_of_zero_mux <= exp_sum when '0',
+                     "0000000000000001" when '1',
+                    "XXXXXXXXXXXXXXXX" when others;
+
+    process(i_clk, i_rst)
+    begin
+        if(i_rst = '1') then
+            o_exp_reg <= "0000000000000000";
+        elsif i_clk'event and i_clk = '1' then
+            if(exp_load = '1') then
+                o_exp_reg <= two_power_of_zero_mux;
+            end if;
+        end if;
+    end process;
+
+    exp_sum <= o_exp_reg + o_exp_reg;
+
+    gen_comp_three <= '0' when (o_exp_reg < o_num_reg) else '1';
+
+    with end_sum_sel select
+        end_sum_mux <= "00000000" when gen_comp_three,
+                     "00000001" when not gen_comp_three,
+                    "XXXXXXXX" when others;
+
+    counter_sum <= end_sum_mux + o_sum_counter_reg;
+
+    process(i_clk, i_rst)
+    begin
+        if(i_rst = '1') then
+            o_sum_counter_reg <= "00000000";
+        elsif i_clk'event and i_clk = '1' then
+            if(sum_counter_load = '1') then
+                o_sum_counter_reg <= counter_sum;
+            end if;
+        end if;
+    end process;
+
+    shift_sub <= "00001000" - o_sum_counter_reg;
+
+    process(i_clk, i_rst)
+    begin
+        if(i_rst = '1') then
+            o_curr_pixel_reg <= "0000000000000000";
+        elsif i_clk'event and i_clk = '1' then
+            if(curr_pixel_load = '1') then
+                o_curr_pixel_reg <=  ("00000000" & i_data);
+            end if;
+        end if;
+    end process;
+
+    curr_pixel_sub <= (o_curr_pixel_reg - ("00000000" & o_min_reg));
+
+    process(i_clk, i_rst)
+    begin
+        if(i_rst = '1') then
+            o_concat_reg <= "0000000000000000";
+        elsif i_clk'event and i_clk = '1' then
+            if(concat_reg_load = '1') then
+                o_concat_reg <= conc_mux;
+            end if;
+        end if;
+    end process;
+
+    with end_sum_sel select
+        conc_mux <= o_concat_reg when end_shift,
+                     o_concat_reg (14 downto 0) & '0' when not end_shift,
+                    "XXXXXXXXXXXXXXXX" when others;
+
+    process(i_clk, i_rst)
+    begin
+        if(i_rst = '1') then
+            o_shift_reg <= "00000000";
+        elsif i_clk'event and i_clk = '1' then
+            if(shift_load = '1') then
+                o_shift_reg <= shift_sub;
+            end if;
+        end if;
+    end process;
+
+    shift_decr_sub <= o_shift_reg - "00000001";
+
+    end_shift <= '1' when (o_shift_reg = "00000000") else '0';
+
+    gen_comp_four <= '1' when (o_concat_reg < "11111111") else '0';
+
+    with temp_sel select
+        temp_mux <= o_concat_reg when gen_comp_four,
+                     "11111111" when not gen_comp_four,
+                    "00000000" when others;
+
+    o_data <= temp_mux;
 
 end Behavioral;
-
-        o_min_reg <= "00000000";
-        o_max_reg <= "00000000";
-        o_curr_pixel_reg <= "00000000";
-        o_delta_reg <= "0000000000000000";
-        o_num_reg <= "0000000000000000";
-        o_exp_reg <= "0000000000000000";
-        o_sum_counter_reg <= "00000000";
-        min_mux <= "11111111"; --255 valore iniziale min
-        max_mux <= "00000000"; --0 valore iniziale max
