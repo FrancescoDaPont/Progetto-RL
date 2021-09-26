@@ -121,8 +121,8 @@ begin
   begin
       if(i_rst = '1') then
           cur_state <= S0;
-
-
+          
+          
           --o_address <= current_address;
           --o_result_reg <= "0000000000000000";
       elsif i_clk'event and i_clk = '1' then
@@ -167,7 +167,7 @@ begin
             next_state <= S16;
         when S5 =>
             if decrement = '0' then
-              next_state <= S6;
+              next_state <= S6;            
             else next_state <= S5;
             end if;
         when S6 =>
@@ -211,9 +211,9 @@ begin
         when S18 =>
             next_state <= S2;
         when others =>
-      end case;
+      end case;  
     end process;
-
+    
     process(cur_state)
     begin
         --o_result_reg <= "0000000000000000";
@@ -242,7 +242,7 @@ begin
         delta_load <= '0';
         two_power_of_zero <= '1';
         num_reg_load <= '0';
-        exp_load <= '0';
+        --exp_load <= '0';
         end_sum_sel <= '1';
         sum_counter_load <= '0';
         curr_pixel_load <= '0';
@@ -262,7 +262,7 @@ begin
                 cost_reg_load <= '1';
                 first_sel <= '0';
                 result_reg_load <= '1';
-            when S2 =>
+            when S2 =>                
                 n_tot_addr_load <= '0';
                 cost_reg_load <= '0';
                 result_reg_load <= '0';
@@ -360,9 +360,9 @@ begin
                 cost_reg_load <= '1';
                 first_sel <= '0';
                 result_reg_load <= '0';
-        end case;
+        end case;    
     end process;
-
+    
     process(i_clk, i_rst)
     begin
         o_cost_reg <= "00000000";
@@ -374,12 +374,12 @@ begin
             end if;
         end if;
     end process;
-
+    
     with tot_addr_sel select
         tot_addr_mux <= ("00000000" & i_data) when '0',
                     tot_addr_sum when '1',
                     "XXXXXXXXXXXXXXXX" when others;
-
+                    
     process(i_clk, i_rst)
     begin
         o_n_tot_addr_reg <= "0000000000000000";
@@ -391,21 +391,21 @@ begin
             end if;
         end if;
     end process;
-
+    
     with stop_adding_sel select
         stop_adding_mux <= ("00000000" & o_cost_reg) when '0',
                     "0000000000000000" when '1',
                     "XXXXXXXXXXXXXXXX" when others;
-
+    
     tot_addr_sum <= stop_adding_mux + o_n_tot_addr_reg;
-
+    
     with reset_result_sel select
         reset_result_mux <= ("00000000" & i_data) when '0',
                     result_sum when '1',
                     "XXXXXXXXXXXXXXXX" when others;
-
+    
     result_sum <= o_result_reg + stop_adding_mux;
-
+    
     process(i_clk, i_rst)
     begin
         o_result_reg <= "0000000000000000";
@@ -417,12 +417,12 @@ begin
             end if;
         end if;
     end process;
-
+    
     with n_row_sel select
         n_row_mux <= i_data when '0',
                      n_row_sub when '1',
                     "XXXXXXXX" when others;
-
+    
     process(i_clk, i_rst)
     begin
         if(i_rst = '1') then
@@ -433,23 +433,23 @@ begin
             end if;
         end if;
     end process;
-
+    
     n_row_sub <= o_n_row_reg - "00000001";
-
+    
     end_multiply <= '1' when (o_n_row_reg = "00000000") else '0'; --or (o_cost_reg = "00000000")) else '0';
-
+    
     with decr_sel select
         decr_mux <= zero_row_mux when '0',
                      addr_to_look_sub when '1',
                     "XXXXXXXXXXXXXXXX" when others;
-
+    
     addr_to_look_sub <= o_addr_to_look_reg - "0000000000000001";
-
+                    
     with zero_row_sel select
         zero_row_mux <= o_n_tot_addr_reg when '0',
                      "0000000000000000" when '1',
                     "XXXXXXXXXXXXXXXX" when others;
-
+    
     process(i_clk, i_rst)
     begin
         if(i_rst = '1') then
@@ -460,7 +460,7 @@ begin
             end if;
         end if;
     end process;
-
+    
     process(i_clk, i_rst)
     begin
         if(i_rst = '1') then
@@ -471,19 +471,19 @@ begin
             end if;
         end if;
     end process;
-
+    
     curr_addr_sum <= o_n_tot_addr_reg + "0000000000000001";
-
+    
     with second_or_default_sel select
         second_or_def_mux <= "0000000000000001" when '0',
                      o_curr_addr_reg when '1',
                     "XXXXXXXXXXXXXXXX" when others;
-
+    
     with first_sel select
         first_sel_mux <= second_or_def_mux when '0',
                      o_addr_sum when '1',
                     "XXXXXXXXXXXXXXXX" when others;
-
+    
     process(i_clk, i_rst)
     begin
         o_o_addr_reg <= "0000000000000000";
@@ -495,21 +495,25 @@ begin
             end if;
         end if;
     end process;
-
+    
+    addr_to_look_sub <= o_addr_to_look_reg - 1;
+    
+    decrement <= '0' when (o_addr_to_look_reg = "0000000000000000") else '1';
+    
     with stop_sel select
         stop_mux <= "0000000000000001" when '0',
                      "0000000000000000" when '1',
                     "XXXXXXXXXXXXXXXX" when others;
-
+    
     done_sum <= o_result_reg + o_n_tot_addr_reg;
-
+    
     --o_address <= o_o_addr_reg; --fonte indefinitezza
-
+    
     o_addr_sum <= o_o_addr_reg + stop_mux;
-
+    
     --o_addr_sum <= o_address + stop_mux;
     --fine primo foglio
-
+    
     process(i_clk, i_rst)
     begin
         o_min_reg <= "11111111";
@@ -521,17 +525,17 @@ begin
             end if;
         end if;
     end process;
-
+    
     --min_mux <= "11111111";
     --max_mux <= "00000000";
-
+    
     with min_sel select
         min_mux <= o_min_reg when gen_comp_one,
                      i_data when not gen_comp_one,
                     "11111111" when others;
-
+                    
     gen_comp_one <= '1' when (i_data < o_min_reg) else '0';
-
+    
     process(i_clk, i_rst)
     begin
         if(i_rst = '1') then
@@ -542,16 +546,16 @@ begin
             end if;
         end if;
     end process;
-
+    
     with max_sel select
         max_mux <= o_max_reg when gen_comp_two,
                      i_data when not gen_comp_two,
                     "00000000" when others;
-
+    
     gen_comp_two <= '1' when (i_data > o_max_reg) else '0';
-
+    
     max_minus_min <= "00000000" & (o_max_reg - o_min_reg);
-
+    
     process(i_clk, i_rst)
     begin
         if(i_rst = '1') then
@@ -562,9 +566,9 @@ begin
             end if;
         end if;
     end process;
-
+    
     delta_sum <= o_delta_reg + "0000000000000001";
-
+    
     process(i_clk, i_rst)
     begin
         if(i_rst = '1') then
@@ -575,12 +579,12 @@ begin
             end if;
         end if;
     end process;
-
+    
     with two_power_of_zero select
         two_power_of_zero_mux <= exp_sum when '0',
                      "0000000000000001" when '1',
                     "XXXXXXXXXXXXXXXX" when others;
-
+    
     process(i_clk, i_rst)
     begin
         if(i_rst = '1') then
@@ -591,18 +595,20 @@ begin
             end if;
         end if;
     end process;
-
+    
     exp_sum <= o_exp_reg + o_exp_reg;
-
+    
     gen_comp_three <= '0' when (o_exp_reg < o_num_reg) else '1';
-
+    
     with end_sum_sel select
         end_sum_mux <= "00000000" when gen_comp_three,
                      "00000001" when not gen_comp_three,
                     "XXXXXXXX" when others;
-
+    
     counter_sum <= end_sum_mux + o_sum_counter_reg;
-
+    
+    end_sum <= gen_comp_three;
+    
     process(i_clk, i_rst)
     begin
         if(i_rst = '1') then
@@ -613,9 +619,9 @@ begin
             end if;
         end if;
     end process;
-
+    
     shift_sub <= "00001000" - o_sum_counter_reg;
-
+    
     process(i_clk, i_rst)
     begin
         if(i_rst = '1') then
@@ -626,9 +632,9 @@ begin
             end if;
         end if;
     end process;
-
+    
     curr_pixel_sub <= (o_curr_pixel_reg - ("00000000" & o_min_reg));
-
+    
     process(i_clk, i_rst)
     begin
         if(i_rst = '1') then
@@ -639,12 +645,12 @@ begin
             end if;
         end if;
     end process;
-
+    
     with end_sum_sel select
         conc_mux <= o_concat_reg when end_shift,
                      o_concat_reg (14 downto 0) & '0' when not end_shift,
                     "XXXXXXXXXXXXXXXX" when others;
-
+    
     process(i_clk, i_rst)
     begin
         if(i_rst = '1') then
@@ -655,18 +661,18 @@ begin
             end if;
         end if;
     end process;
-
+    
     shift_decr_sub <= o_shift_reg - "00000001";
-
+    
     end_shift <= '1' when (o_shift_reg = "00000000") else '0';
-
+    
     gen_comp_four <= '1' when (o_concat_reg < "11111111") else '0';
-
+    
     with temp_sel select
         temp_mux <= o_concat_reg when gen_comp_four,
                      "11111111" when not gen_comp_four,
                     "00000000" when others;
-
+    
     o_data <= temp_mux;
-
+    
 end Behavioral;
