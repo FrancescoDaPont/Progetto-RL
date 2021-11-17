@@ -37,7 +37,6 @@ signal addr_to_look_load : std_logic;
 signal decr_sel : std_logic;
 signal decrement : std_logic;
 signal sub_or_sum_sel : std_logic;
-signal delta_sel : std_logic;
 signal delta_load : std_logic;
 signal num_reg_load : std_logic;
 signal two_power_of_zero : std_logic;
@@ -61,14 +60,20 @@ signal gen_comp_one : std_logic;
 signal gen_comp_two : std_logic;
 signal gen_comp_three : std_logic;
 signal gen_comp_four : std_logic;
-signal second_time : std_logic;
 signal comp_four_sel : std_logic;
 signal reset_regs : std_logic;
 signal address_two : std_logic;
 signal confront_load : std_logic;
 signal dont_shift : std_logic;
-type S is (S0,S1,S1_1,S2_1,S2_2,S3,S3_1,S3_2,S4_1,S4_2,S5_1,S5_15,S5_2A,S5_2B,S6,S7,S8,S9_A,S9_B,S9_C,S10,S10_1,S11_A,S11_B,S11_C,S11_12,S11_15,S12_A_1,S12_A_2,S12_B_1,S12_B_2,S12_B_3,S16); --(,S11_2,S13,S14,S15,S17,S18)
-signal cur_state, next_state : S;
+signal shift_by_one : std_logic;
+signal shift_by_two : std_logic;
+signal shift_by_three : std_logic;
+signal shift_by_four : std_logic;
+signal shift_by_five : std_logic;
+signal shift_by_six : std_logic;
+signal shift_by_seven : std_logic;
+type S is (S0,S1,S1_1,S2_1,S2_2,S3,S3_1,S3_2,S4_1,S4_2,S5_1,S5_15,S5_2A,S5_2B,S6,S7,S8,S9_A,S9_B,S9_C,S10,S10_1,S11_A,S11_B,S11_C,S11_12,S11_15,S12_A_1,S12_A_2,S12_A_1_B,S12_B_1,S12_B_2,S12_B_3,S16); --(,S11_2,S13,S14,S15,S17,S18)
+signal cur_state, next_state : S; --34 stati
 
 signal o_n_row_reg : std_logic_vector(7 downto 0); --output/mux primo foglio
 signal o_result_reg : std_logic_vector(15 downto 0);
@@ -86,7 +91,6 @@ signal second_or_def_mux : std_logic_vector(15 downto 0);
 signal stop_mux : std_logic_vector(15 downto 0);
 signal first_sel_mux : std_logic_vector(15 downto 0);
 signal sub_or_sum_mux : std_logic_vector(15 downto 0);
-signal current_address  : std_logic_vector(15 downto 0); --tentativo con curr e o_addr
 
 signal o_min_reg : std_logic_vector(7 downto 0); --output/mux secondo foglio
 signal o_max_reg : std_logic_vector(7 downto 0);
@@ -139,7 +143,7 @@ begin
       end if;
   end process;
 
-  process(cur_state, i_start, end_multiply, decrement, done, end_shift, dont_shift)
+  process(cur_state, i_start, end_multiply, decrement, done, end_shift, dont_shift, shift_by_one, shift_by_two, shift_by_three, shift_by_four, shift_by_five, shift_by_six, shift_by_seven, o_n_row_reg, gen_comp_three)
     begin
       next_state <= cur_state;
       case cur_state is
@@ -229,8 +233,26 @@ begin
             else next_state <= S11_A;
             end if;
         when S11_C =>
-            next_state <= S12_A_1;
+            if shift_by_one = '1' then
+            next_state <= S12_A_1_B;
+            elsif shift_by_two = '1' then
+            next_state <= S12_A_1_B;
+            elsif shift_by_three = '1' then
+            next_state <= S12_A_1_B;
+            elsif shift_by_four = '1' then
+            next_state <= S12_A_1_B;
+            elsif shift_by_five = '1' then
+            next_state <= S12_A_1_B;
+            elsif shift_by_six = '1' then
+            next_state <= S12_A_1_B;
+            elsif shift_by_seven = '1' then
+            next_state <= S12_A_1_B;
+            else next_state <= S12_A_1;
+            end if;
+            --next_state <= S12_A_1;
         when S12_A_1 =>
+            next_state <= S12_A_2;
+        when S12_A_1_B =>
             next_state <= S12_A_2;
         when S12_A_2 =>
             if done = '1' then
@@ -254,7 +276,7 @@ begin
       end case;  
     end process;
     
-    process(cur_state)
+    process(cur_state, o_o_addr_reg)
     begin
         o_en <= '0';
         o_we <= '0';
@@ -293,7 +315,7 @@ begin
         new_pix_load <= '0';
         comp_four_sel <= '1';
         confront_load <= '0';
-        --dont_shift <= '0';
+        exp_load <= '1'; --effettivamente era undefined, ritornaci se ci sono problemi
         o_address <= o_o_addr_reg;
         case cur_state is
             when S0 =>
@@ -479,6 +501,7 @@ begin
             when S12_A_1 =>
                 confront_load <= '1';
                 new_pix_load <= '1';
+            when S12_A_1_B =>
             when S12_A_2 =>
                 o_en <= '1';
                 o_we <= '1';
@@ -497,7 +520,7 @@ begin
         end case;    
     end process;
     
-    process(i_clk, i_rst)
+    process(i_clk, i_rst, reset_regs)
     begin
         if(i_rst = '1') then
             o_cost_reg <= "XXXXXXXX";
@@ -556,7 +579,7 @@ begin
                      n_row_sub when '1',
                     "XXXXXXXX" when others;
     
-    process(i_clk, i_rst)
+    process(i_clk, i_rst, reset_regs)
     begin
         if(i_rst = '1') then
             o_n_row_reg <= "XXXXXXXX";
@@ -619,7 +642,7 @@ begin
     
     done <= '1' when (o_o_addr_reg = done_sum) else '0';
     
-    process(i_clk, i_rst)
+    process(i_clk, i_rst, reset_regs, address_two)
     begin
         if(i_rst = '1') then
             o_o_addr_reg <= "0000000000000000";
@@ -646,7 +669,7 @@ begin
     o_addr_sum <= o_o_addr_reg + stop_mux;
     --fine primo foglio
     
-    process(i_clk, i_rst)
+    process(i_clk, i_rst, reset_regs)
     begin
         if(i_rst = '1') then
             o_min_reg <= "11111111"; --255 valore iniziale min
@@ -666,7 +689,7 @@ begin
                     
     gen_comp_one <= '1' when (i_data < o_min_reg) else '0';
     
-    process(i_clk, i_rst)
+    process(i_clk, i_rst, reset_regs)
     begin
         if(i_rst = '1') then
             o_max_reg <= "00000000"; --0 valore iniziale min
@@ -702,6 +725,20 @@ begin
     delta_sum <= o_delta_reg + "0000000000000001";
     
     dont_shift <= '1' when delta_sum = "0000000100000000" else '0'; --quando ho 256 in delta sum non c'è bisogno di shift
+    
+    shift_by_one <= '1' when delta_sum = "0000000010000000" else '0'; --128
+    
+    shift_by_two <= '1' when delta_sum = "0000000001000000" else '0'; --64
+    
+    shift_by_three <= '1' when delta_sum = "0000000000100000" else '0'; --32
+    
+    shift_by_four <= '1' when delta_sum = "0000000000010000" else '0'; --16
+    
+    shift_by_five <= '1' when delta_sum = "0000000000001000" else '0'; --8
+    
+    shift_by_six <= '1' when delta_sum = "0000000000000100" else '0'; --4
+    
+    shift_by_seven <= '1' when delta_sum = "0000000000000010" else '0'; --2
     
     process(i_clk, i_rst)
     begin
@@ -741,7 +778,7 @@ begin
     
     counter_sum <= end_sum_mux + o_sum_counter_reg;
     
-    process(i_clk, i_rst)
+    process(i_clk, i_rst, reset_regs)
     begin
         if(i_rst = '1') then
             o_sum_counter_reg <= "00000000";
@@ -817,10 +854,10 @@ begin
     
     end_shift <= '1' when (o_shift_reg = "00000000") else '0';
     
-    gen_comp_four <= '1' when (o_concat_reg < "0000000011111111") else '0'; --posso aggiungere un multiplexer che annulla l'input da o_concat_reg in S11_C?
+    gen_comp_four <= '1' when (confront_with_ff_reg < "0000000011111111") else '0'; --'1' when (o_concat_reg < "0000000011111111")
     
     with comp_four_mux select
-        temp_mux <= confront_with_ff_reg(7 downto 0) when '1', --o_concat_reg(7 downto 0) when '1',
+        temp_mux <= confront_with_ff_reg(7 downto 0) when '1',
                      "11111111" when '0',
                     "00000000" when others;
     
