@@ -41,7 +41,6 @@ signal delta_load : std_logic;
 signal num_reg_load : std_logic;
 signal two_power_of_zero : std_logic;
 signal exp_load : std_logic;
-signal counter_load : std_logic;
 signal curr_pixel_load : std_logic;
 signal shift_load : std_logic;
 signal done : std_logic;
@@ -132,7 +131,6 @@ signal counter_sum : std_logic_vector(7 downto 0);
 signal sum_counter_sub : std_logic_vector(7 downto 0);
 signal shift_sub : std_logic_vector(7 downto 0);
 signal shift_decr_sub : std_logic_vector(7 downto 0);
---signal conc : std_logic_vector(15 downto 0);
 begin
   process(i_clk, i_rst)
   begin
@@ -319,8 +317,6 @@ begin
         o_address <= o_o_addr_reg;
         case cur_state is
             when S0 =>
-                cost_reg_load <= '0';
-                result_reg_load <= '0';
                 o_en <= '1';
             when S1 =>
                 o_en <= '1';
@@ -343,7 +339,7 @@ begin
                 o_en <= '1';
                 first_sel <= '1';
                 o_addr_load <= '1';
-            when S2_2 =>
+            when S2_2 => --arriva qua in post-synth
                 n_row_reg_load <= '1';
                 o_en <= '1';
             when S3 => --indirizzo 2
@@ -454,7 +450,7 @@ begin
                 o_en <= '1';
                 
                 shift_load <= '1';
-                concat_reg_load <= '1';
+                --concat_reg_load <= '1'; carica un XXXX in o_concat_reg
             when S11_12 =>
                 o_en <= '1';
                 curr_pixel_load <= '1';
@@ -523,9 +519,9 @@ begin
     process(i_clk, i_rst, reset_regs)
     begin
         if(i_rst = '1') then
-            o_cost_reg <= "XXXXXXXX";
+            o_cost_reg <= "11111111";-- "XXXXXXXX";
         elsif(reset_regs = '1') then
-            o_cost_reg <= "XXXXXXXX";
+            o_cost_reg <= "11111111";-- "XXXXXXXX";
         elsif i_clk'event and i_clk = '1' then
             if(cost_reg_load = '1') then
                 o_cost_reg <= i_data;
@@ -582,9 +578,9 @@ begin
     process(i_clk, i_rst, reset_regs)
     begin
         if(i_rst = '1') then
-            o_n_row_reg <= "XXXXXXXX";
+            o_n_row_reg <= "11111111"; --"XXXXXXXX";
         elsif(reset_regs = '1') then
-            o_n_row_reg <= "XXXXXXXX";
+            o_n_row_reg <= "11111111"; --"XXXXXXXX";
         elsif i_clk'event and i_clk = '1' then
             if(n_row_reg_load = '1') then
                 o_n_row_reg <= n_row_mux;
@@ -642,7 +638,7 @@ begin
     
     done <= '1' when (o_o_addr_reg = done_sum) else '0';
     
-    process(i_clk, i_rst, reset_regs, address_two)
+    process(i_clk, i_rst, address_two) -- reset_regs,
     begin
         if(i_rst = '1') then
             o_o_addr_reg <= "0000000000000000";
@@ -743,7 +739,7 @@ begin
     process(i_clk, i_rst)
     begin
         if(i_rst = '1') then
-            o_num_reg <= "XXXXXXXXXXXXXXXX";
+            o_num_reg <= "1111111111111111";-- "XXXXXXXXXXXXXXXX";
         elsif i_clk'event and i_clk = '1' then
             if(num_reg_load = '1') then
                 o_num_reg <= delta_sum;
@@ -761,7 +757,7 @@ begin
         if(i_rst = '1') then
             o_exp_reg <= "0000000000000000";
         elsif i_clk'event and i_clk = '1' then
-            if(exp_load = '1') then
+            if(exp_load = '1') then --SEMPRE A 1
                 o_exp_reg <= two_power_of_zero_mux;
             end if;
         end if;
@@ -796,7 +792,7 @@ begin
     process(i_clk, i_rst)
     begin
         if(i_rst = '1') then
-            o_curr_pixel_reg <= "XXXXXXXXXXXXXXXX";
+            o_curr_pixel_reg <= "0000000000000000"; -- "XXXXXXXXXXXXXXXX";
         elsif i_clk'event and i_clk = '1' then
             if(curr_pixel_load = '1') then
                 o_curr_pixel_reg <=  ("00000000" & i_data);
