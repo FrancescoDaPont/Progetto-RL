@@ -121,6 +121,7 @@ signal curr_addr_sum : std_logic_vector(15 downto 0);
 signal done_sum : std_logic_vector(15 downto 0);
 signal o_addr_sum : std_logic_vector(15 downto 0);
 signal addr_minus_cost : std_logic_vector(15 downto 0);
+signal addr_two_or_minus_cost : std_logic_vector(15 downto 0);
 signal addr_plus_cost : std_logic_vector(15 downto 0);
 
 signal curr_pixel_sub : std_logic_vector(15 downto 0); --somme/sottr. secondo foglio
@@ -427,6 +428,8 @@ begin
                 o_en <= '1';
                 zero_row_sel <= '1';
                 
+                o_addr_load <= '1';
+                second_or_default_sel <= '1';
                 address_two <= '1';
                 --bisogna sottrarre 1 all'indirizzo
             when S7 => --all'inizio di S8 ottengo il delta
@@ -623,8 +626,12 @@ begin
                     "XXXXXXXXXXXXXXXX" when others;
     
     with sub_or_sum_sel select
-        sub_or_sum_mux <= addr_minus_cost when '0',
+        sub_or_sum_mux <= addr_two_or_minus_cost when '0',
                      addr_plus_cost when '1',
+                    "XXXXXXXXXXXXXXXX" when others;
+    with address_two select
+        addr_two_or_minus_cost <= addr_minus_cost when '0',
+                     "0000000000000010" when '1',
                     "XXXXXXXXXXXXXXXX" when others;
     
     addr_minus_cost <= o_o_addr_reg - o_result_reg + "0000000000000001";
@@ -632,24 +639,26 @@ begin
     addr_plus_cost <= o_o_addr_reg + o_result_reg;
     
     with first_sel select
-        first_sel_mux <= second_or_def_mux when '0',
-                     o_addr_sum when '1',
+        first_sel_mux <= second_or_def_mux when '0', -- 0 o addr_minus/plus_cost(ind corrente -/+ o_result_reg)
+                     o_addr_sum when '1', --indirizzo + 1 o 0
                     "XXXXXXXXXXXXXXXX" when others;
     
     done <= '1' when (o_o_addr_reg = done_sum) else '0';
     
-    process(i_clk, i_rst, address_two) -- reset_regs,
+    process(i_clk, i_rst, address_two)--a S6 address_two a 1
     begin
         if(i_rst = '1') then
             o_o_addr_reg <= "0000000000000000";
-        elsif(address_two = '1') then
-            o_o_addr_reg <= "0000000000000010";
+        --elsif(address_two = '1') then
+            --o_o_addr_reg <= "0000000000000010"; --metti tutto nel first_sel_mux
         elsif i_clk'event and i_clk = '1' then
             if(o_addr_load = '1') then
                 o_o_addr_reg <= first_sel_mux;
             end if;
         end if;
     end process;
+
+    o_addr_sum <= o_o_addr_reg + stop_mux;
     
     addr_to_look_sub <= o_addr_to_look_reg - 1;
     
@@ -662,7 +671,6 @@ begin
     
     done_sum <= o_result_reg + o_n_tot_addr_reg + "0000000000000001";
     
-    o_addr_sum <= o_o_addr_reg + stop_mux;
     --fine primo foglio
     
     process(i_clk, i_rst, reset_regs)
