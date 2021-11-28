@@ -71,7 +71,7 @@ signal shift_by_four : std_logic;
 signal shift_by_five : std_logic;
 signal shift_by_six : std_logic;
 signal shift_by_seven : std_logic;
-type S is (S0,S1,S1_1,S2_1,S2_2,S3,S3_1,S3_2,S4_1,S4_2,S5_1,S5_15,S5_2A,S5_2B,S6,S7,S8,S9_A,S9_B,S9_C,S10,S10_1,S11_A,S11_B,S11_C,S11_12,S11_15,S12_A_1,S12_A_2,S12_A_1_B,S12_B_1,S12_B_2,S12_B_3,S16); --(,S11_2,S13,S14,S15,S17,S18)
+type S is (S0,S1,S2,S3,S4,S5,S6,S7,S8,S9,S10,S11,S12,S13,S14,S15,S16,S17,S18,S19,S20,S21,S22,S23,S24,S25,S26,S27,S28,S29,S30,S31,S32,S33);
 signal cur_state, next_state : S; --34 stati
 
 signal o_n_row_reg : std_logic_vector(7 downto 0); --output/mux primo foglio
@@ -151,123 +151,122 @@ begin
               next_state <= S1;
             end if;
         when S1 =>
-            next_state <= S1_1;
-        when S1_1 =>
-            next_state <= S2_1;
-        when S2_1 =>
-            if end_multiply = '1' then
-              next_state <= S4_2;
-            else next_state <= S2_2;
-            end if;
-        when S2_2 =>
+            next_state <= S2;
+        when S2 =>
             next_state <= S3;
         when S3 =>
-            next_state <= S3_1;
-        when S3_1 =>
-            next_state <= S3_2;
-        when S3_2 =>
-            if o_n_row_reg = "00000000" then
-              next_state <= S4_1;
+            if end_multiply = '1' then
+              next_state <= S9;
+            else next_state <= S4;
             end if;
-        when S4_1 =>
-            if decrement = '0' then
-              next_state <= S6;
-            else next_state <= S5_1;
-            end if;
-        when S4_2 =>
-            next_state <= S16;
-        when S5_1 =>
-            next_state <= S5_15;
-        when S5_15 =>
-            next_state <= S5_2A;
-        when S5_2A =>
-            if decrement = '0' then
-              next_state <= S6;
-            else next_state <= S5_2B;
-            end if;
-        when S5_2B =>
-            if decrement = '0' then
-              next_state <= S6;
-            else next_state <= S5_2A;
-            end if;
+        when S4 =>
+            next_state <= S5;
+        when S5 =>
+            next_state <= S6;
         when S6 =>
             next_state <= S7;
         when S7 =>
-            next_state <= S8;
+            if o_n_row_reg = "00000000" then
+              next_state <= S8;
+            end if;
         when S8 =>
-            next_state <= S9_A;
-        when S9_A =>
-            if gen_comp_three = '1' then
-              next_state <= S9_C;
-            else next_state <= S9_B;
+            if decrement = '0' then
+              next_state <= S14;
+            else next_state <= S10;
             end if;
-        when S9_B =>
-            if gen_comp_three = '1' then
-              next_state <= S9_C;
-            else next_state <= S9_A;
-            end if;
-        when S9_C =>
-            next_state <= S10_1;
+        when S9 =>
+            next_state <= S33;
         when S10 =>
-            next_state <= S10_1;
-        when S10_1 =>
-            next_state <= S11_12;
-        when S11_12 =>
-            next_state <= S11_15;
-        when S11_15 =>
-            if end_shift = '1' and (dont_shift = '0') then
-            next_state <= S12_A_1;
-            elsif (dont_shift = '1') then
-            next_state <= S12_B_1;
-            else next_state <= S11_A;
+            next_state <= S11;
+        when S11 =>
+            next_state <= S12;
+        when S12 =>
+            if decrement = '0' then
+              next_state <= S14;
+            else next_state <= S13;
             end if;
-        when S11_A =>
-            if end_shift = '1' and (dont_shift = '0') then
-            next_state <= S11_C;
-            else next_state <= S11_B;
+        when S13 =>
+            if decrement = '0' then
+              next_state <= S14;
+            else next_state <= S12;
             end if;
-        when S11_B =>
-            if end_shift = '1' and (dont_shift = '0') then
-            next_state <= S11_C;
-            else next_state <= S11_A;
-            end if;
-        when S11_C =>
-            if shift_by_one = '1' then
-            next_state <= S12_A_1_B;
-            elsif shift_by_two = '1' then
-            next_state <= S12_A_1_B;
-            elsif shift_by_three = '1' then
-            next_state <= S12_A_1_B;
-            elsif shift_by_four = '1' then
-            next_state <= S12_A_1_B;
-            elsif shift_by_five = '1' then
-            next_state <= S12_A_1_B;
-            elsif shift_by_six = '1' then
-            next_state <= S12_A_1_B;
-            elsif shift_by_seven = '1' then
-            next_state <= S12_A_1_B;
-            else next_state <= S12_A_1;
-            end if;
-            --next_state <= S12_A_1;
-        when S12_A_1 =>
-            next_state <= S12_A_2;
-        when S12_A_1_B =>
-            next_state <= S12_A_2;
-        when S12_A_2 =>
-            if done = '1' then
-              next_state <= S16;
-            else next_state <= S10;
-            end if;
-        when S12_B_1 =>
-            next_state <= S12_B_2;
-        when S12_B_2 =>
-            next_state <= S12_B_3;
-        when S12_B_3 =>
-            if done = '1' then
-              next_state <= S16;
-            else next_state <= S10;
-            end if;
+        when S14 =>
+            next_state <= S15;
+        when S15 =>
+            next_state <= S16;
         when S16 =>
+            next_state <= S17;
+        when S17 =>
+            if gen_comp_three = '1' then
+              next_state <= S19;
+            else next_state <= S18;
+            end if;
+        when S18 =>
+            if gen_comp_three = '1' then
+              next_state <= S19;
+            else next_state <= S17;
+            end if;
+        when S19 =>
+            next_state <= S21;
+        when S20 =>
+            next_state <= S21;
+        when S21 =>
+            next_state <= S22;
+        when S22 =>
+            next_state <= S23;
+        when S23 =>
+            if end_shift = '1' and (dont_shift = '0') then
+            next_state <= S27;
+            elsif (dont_shift = '1') then
+            next_state <= S30;
+            else next_state <= S24;
+            end if;
+        when S24 =>
+            if end_shift = '1' and (dont_shift = '0') then
+            next_state <= S26;
+            else next_state <= S25;
+            end if;
+        when S25 =>
+            if end_shift = '1' and (dont_shift = '0') then
+            next_state <= S26;
+            else next_state <= S24;
+            end if;
+        when S26 =>
+            if shift_by_one = '1' then
+            next_state <= S29;
+            elsif shift_by_two = '1' then
+            next_state <= S29;
+            elsif shift_by_three = '1' then
+            next_state <= S29;
+            elsif shift_by_four = '1' then
+            next_state <= S29;
+            elsif shift_by_five = '1' then
+            next_state <= S29;
+            elsif shift_by_six = '1' then
+            next_state <= S29;
+            elsif shift_by_seven = '1' then
+            next_state <= S29;
+            else next_state <= S27;
+            end if;
+        when S27 =>
+            next_state <= S28;
+        when S29 =>
+            next_state <= S28;
+        when S28 =>
+            if done = '1' then
+              next_state <= S33;
+            else next_state <= S20;
+            end if;
+        when S30 =>
+            next_state <= S31;
+        when S31 =>
+            next_state <= S32;
+        when S32 =>
+            if done = '1' then
+              next_state <= S33;
+            else next_state <= S20;
+            end if;
+        when S33 =>
             if i_start = '1' then
               next_state <= S0;
             end if;
@@ -314,7 +313,7 @@ begin
         new_pix_load <= '0';
         comp_four_sel <= '1';
         confront_load <= '0';
-        exp_load <= '1'; --effettivamente era undefined, ritornaci se ci sono problemi
+        exp_load <= '1';
         o_address <= o_o_addr_reg;
         case cur_state is
             when S0 =>
@@ -323,7 +322,7 @@ begin
                 o_en <= '1';
                 cost_reg_load <= '1';
                 result_reg_load <= '1';
-            when S1_1 => --fin qua indirizzo 0
+            when S2 => --fin qua indirizzo 0
                 o_en <= '1';
                 n_tot_addr_load <= '1';
                 cost_reg_load <= '1';
@@ -331,19 +330,18 @@ begin
                 
                 o_addr_load <= '1';
                 first_sel <= '1';
-            when S2_1 => --indirizzo 1
+            when S3 => --indirizzo 1
                 n_tot_addr_load <= '0';
                 cost_reg_load <= '0';
                 result_reg_load <= '0';
-                --n_row_reg_load <= '1';
                 
                 o_en <= '1';
                 first_sel <= '1';
                 o_addr_load <= '1';
-            when S2_2 => --arriva qua in post-synth
+            when S4 =>
                 n_row_reg_load <= '1';
                 o_en <= '1';
-            when S3 => --indirizzo 2
+            when S5 => --indirizzo 2
                 n_tot_addr_load <= '1';
                 result_reg_load <= '1';
                 n_row_reg_load <= '1';
@@ -353,12 +351,12 @@ begin
                 first_sel <= '1';
                 o_addr_load <= '1';
                 
-                reset_result_sel <= '1'; --per mettere al valore giusto n_tot_addr e result_reg checka se va bene
+                reset_result_sel <= '1';
                 tot_addr_sel <= '1';
                 
                 min_reg_load <= '1';
                 max_reg_load <= '1';
-            when S3_1 =>
+            when S6 =>
                 n_tot_addr_load <= '1';
                 n_row_reg_load <= '1';
                 result_reg_load <= '1';
@@ -370,7 +368,7 @@ begin
                 
                 min_reg_load <= '1';
                 max_reg_load <= '1';
-            when S3_2 =>
+            when S7 =>
                 n_tot_addr_load <= '1';
                 n_row_reg_load <= '1';
                 result_reg_load <= '1';
@@ -384,27 +382,27 @@ begin
                 
                 min_reg_load <= '1';
                 max_reg_load <= '1';
-            when S4_1 =>
+            when S8 =>
                 addr_to_look_load <= '1';
                 o_en <= '1';
                 
                 min_reg_load <= '1';
                 max_reg_load <= '1';
-            when S4_2 =>
+            when S9 =>
                 zero_row_sel <= '1';
-            when S5_1 =>
+            when S10 =>
                 addr_to_look_load <= '1';
                 decr_sel <= '1';
                 min_reg_load <= '1';
                 max_reg_load <= '1';
                 
                 o_en <= '1';
-            when S5_15 =>
+            when S11 =>
                 addr_to_look_load <= '1';
                 decr_sel <= '1';
                 
                 o_en <= '1';
-            when S5_2A =>
+            when S12 =>
                 addr_to_look_load <= '1';
                 decr_sel <= '1';
                 min_reg_load <= '1';
@@ -413,7 +411,7 @@ begin
                 o_en <= '1';
                 first_sel <= '1';
                 o_addr_load <= '1';
-            when S5_2B =>
+            when S13 =>
                 addr_to_look_load <= '1';
                 decr_sel <= '1';
                 min_reg_load <= '1';
@@ -422,7 +420,7 @@ begin
                 o_en <= '1';
                 first_sel <= '1'; --scorre tutti indirizzi
                 o_addr_load <= '1';
-            when S6 => --all'inizio di S7, ho tutti i valori di input iniziali, il min e il max
+            when S14 => --all'inizio di S15, ho tutti i valori di input iniziali, il min e il max
                 min_reg_load <= '1';
                 max_reg_load <= '1';
                 o_en <= '1';
@@ -432,32 +430,31 @@ begin
                 second_or_default_sel <= '1';
                 address_two <= '1';
                 --bisogna sottrarre 1 all'indirizzo
-            when S7 => --all'inizio di S8 ottengo il delta
+            when S15 => --all'inizio di S16 ottengo il delta
                 delta_load <= '1';
-            when S8 =>
+            when S16 =>
                 o_en <= '1';
                 num_reg_load <= '1';
                 exp_load <= '1';
-            when S9_A => --ho il num_reg (e exp_reg)
+            when S17 => --ho il num_reg (e exp_reg)
                 two_power_of_zero <= '0';
                 sum_counter_load <= '1';
-            when S9_B =>
+            when S18 =>
                 two_power_of_zero <= '0';
                 sum_counter_load <= '1';
-            when S9_C => --sei all'indirizzo 2, allo stato 11_15 sarai a 2 + result_reg
-            when S10 =>
+            when S19 => --sei all'indirizzo 2, allo stato 23 sarai a 2 + result_reg
+            when S20 =>
                 second_or_default_sel <= '1'; --torna indietro di reg_load - 1 posizioni
                 o_addr_load <= '1';
                 o_en <= '1';
-            when S10_1 => --ho disponibile floor(log2(delta+1))+1 (poi gli sottraggo 1)
+            when S21 => --ho disponibile floor(log2(delta+1))+1 (poi gli sottraggo 1)
                 o_en <= '1';
                 
                 shift_load <= '1';
-                --concat_reg_load <= '1'; carica un XXXX in o_concat_reg
-            when S11_12 =>
+            when S22 =>
                 o_en <= '1';
                 curr_pixel_load <= '1';
-            when S11_15 =>
+            when S23 =>
                 concat_reg_load <= '1';
                 conc_sel <= '0';
                 
@@ -468,7 +465,7 @@ begin
                 second_or_default_sel <= '1';
                 o_addr_load <= '1';
                 sub_or_sum_sel <= '1'; --va avanti di reg_load posizioni
-            when S11_A =>
+            when S24 =>
                 shift_load <= '1';
                 shift_once <= '0';
                 shift_sel <= '1';
@@ -479,7 +476,7 @@ begin
                 
                 new_pix_load <= '1'; --carica valore confronto in new_pix_reg
                 confront_load <= '1';
-            when S11_B =>
+            when S25 =>
                 shift_load <= '1';
                 shift_once <= '0';
                 shift_sel <= '1';
@@ -490,29 +487,29 @@ begin
                 
                 new_pix_load <= '1';
                 confront_load <= '1';
-            when S11_C =>
+            when S26 =>
                 conc_sel <= '0';
                 curr_conc_sel <= '1';
                 
                 new_pix_load <= '1';
                 
                 confront_load <= '1';
-            when S12_A_1 =>
+            when S27 =>
                 confront_load <= '1';
                 new_pix_load <= '1';
-            when S12_A_1_B =>
-            when S12_A_2 =>
+            when S29 =>
+            when S28 =>
                 o_en <= '1';
                 o_we <= '1';
-            when S12_B_1 =>
+            when S30 =>
                 confront_load <= '1';
                 new_pix_load <= '1';
-            when S12_B_2 =>
+            when S31 =>
                 new_pix_load <= '1';
-            when S12_B_3 =>
+            when S32 =>
                 o_en <= '1';
                 o_we <= '1';
-            when S16 =>
+            when S33 =>
                 o_done <= '1';
                 o_addr_load <= '1'; --torna a indirizzo 0
                 reset_regs <= '1';
@@ -522,9 +519,9 @@ begin
     process(i_clk, i_rst, reset_regs)
     begin
         if(i_rst = '1') then
-            o_cost_reg <= "11111111";-- "XXXXXXXX";
+            o_cost_reg <= "11111111";
         elsif(reset_regs = '1') then
-            o_cost_reg <= "11111111";-- "XXXXXXXX";
+            o_cost_reg <= "11111111";
         elsif i_clk'event and i_clk = '1' then
             if(cost_reg_load = '1') then
                 o_cost_reg <= i_data;
@@ -581,9 +578,9 @@ begin
     process(i_clk, i_rst, reset_regs)
     begin
         if(i_rst = '1') then
-            o_n_row_reg <= "11111111"; --"XXXXXXXX";
+            o_n_row_reg <= "11111111";
         elsif(reset_regs = '1') then
-            o_n_row_reg <= "11111111"; --"XXXXXXXX";
+            o_n_row_reg <= "11111111";
         elsif i_clk'event and i_clk = '1' then
             if(n_row_reg_load = '1') then
                 o_n_row_reg <= n_row_mux;
@@ -649,8 +646,6 @@ begin
     begin
         if(i_rst = '1') then
             o_o_addr_reg <= "0000000000000000";
-        --elsif(address_two = '1') then
-            --o_o_addr_reg <= "0000000000000010"; --metti tutto nel first_sel_mux
         elsif i_clk'event and i_clk = '1' then
             if(o_addr_load = '1') then
                 o_o_addr_reg <= first_sel_mux;
@@ -696,7 +691,7 @@ begin
     process(i_clk, i_rst, reset_regs)
     begin
         if(i_rst = '1') then
-            o_max_reg <= "00000000"; --0 valore iniziale min
+            o_max_reg <= "00000000"; --0 valore iniziale max
         elsif(reset_regs = '1') then
             o_max_reg <= "00000000";
         elsif i_clk'event and i_clk = '1' then
@@ -747,7 +742,7 @@ begin
     process(i_clk, i_rst)
     begin
         if(i_rst = '1') then
-            o_num_reg <= "1111111111111111";-- "XXXXXXXXXXXXXXXX";
+            o_num_reg <= "1111111111111111";
         elsif i_clk'event and i_clk = '1' then
             if(num_reg_load = '1') then
                 o_num_reg <= delta_sum;
@@ -800,7 +795,7 @@ begin
     process(i_clk, i_rst)
     begin
         if(i_rst = '1') then
-            o_curr_pixel_reg <= "0000000000000000"; -- "XXXXXXXXXXXXXXXX";
+            o_curr_pixel_reg <= "0000000000000000";
         elsif i_clk'event and i_clk = '1' then
             if(curr_pixel_load = '1') then
                 o_curr_pixel_reg <=  ("00000000" & i_data);
@@ -858,7 +853,7 @@ begin
     
     end_shift <= '1' when (o_shift_reg = "00000000") else '0';
     
-    gen_comp_four <= '1' when (confront_with_ff_reg < "0000000011111111") else '0'; --'1' when (o_concat_reg < "0000000011111111")
+    gen_comp_four <= '1' when (confront_with_ff_reg < "0000000011111111") else '0';
     
     with comp_four_mux select
         temp_mux <= confront_with_ff_reg(7 downto 0) when '1',
